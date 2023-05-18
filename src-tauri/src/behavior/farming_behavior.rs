@@ -296,12 +296,14 @@ impl<'a> FarmingBehavior<'_> {
         // low rotation duration means big circle, high means little circle
         use crate::movement::prelude::*;
         play!(self.movement => [
-            HoldKeys(vec!["W", "Space", "D"]),
+            //HoldKeys(vec!["W", "Space", "D"]),
+            HoldKeys(vec!["W", "D"]),
             Wait(dur::Fixed(rotation_duration)),
             ReleaseKey("D"),
             Wait(dur::Fixed(20)),
-            ReleaseKeys(vec!["Space", "W"]),
-            HoldKeyFor("S", dur::Fixed(50)),
+            //ReleaseKeys(vec!["Space", "W"]),
+            ReleaseKeys(vec!["W"]),
+            //HoldKeyFor("S", dur::Fixed(50)),
         ]);
     }
 

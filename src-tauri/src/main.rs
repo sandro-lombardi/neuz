@@ -67,6 +67,7 @@ fn main() {
     };
     let drain = sentry_slog::SentryDrain::new(drain).fuse();
     let logger = Logger::root(drain.fuse(), slog::o!());
+    slog::info!(logger, "Starting neuz");
 
     // Build app
     tauri::Builder::default()
@@ -103,7 +104,7 @@ fn toggle_main_size(
     let win_size = win_size.unwrap().clone();
 
     let default_width = 550;
-    let default_height = 630;
+    let default_height = 600;
 
     let min_width = size[0];
     let min_height = size[1];
@@ -134,7 +135,7 @@ fn focus_client(_state: tauri::State<AppState>, app_handle: tauri::AppHandle) {
 fn get_profiles(_state: tauri::State<AppState>, app_handle: tauri::AppHandle) -> Vec<String> {
     drop(fs::create_dir(
         format!(
-            r"{}\",
+            r"{}/",
             app_handle
                 .path_resolver()
                 .app_dir()
@@ -144,7 +145,7 @@ fn get_profiles(_state: tauri::State<AppState>, app_handle: tauri::AppHandle) ->
         .clone(),
     ));
     let paths = fs::read_dir(format!(
-        r"{}\",
+        r"{}/",
         app_handle
             .path_resolver()
             .app_dir()
@@ -152,19 +153,22 @@ fn get_profiles(_state: tauri::State<AppState>, app_handle: tauri::AppHandle) ->
             .to_string_lossy()
     ))
     .unwrap();
+    //println!("{:?}", paths);
     let mut profiles = vec![];
 
     for path in paths {
         if let Ok(entry) = path {
+            //println!("{:?}", entry.file_name());
             if entry.file_name().to_str().unwrap().starts_with("profile_") {
                 profiles.push(String::from(&*entry.file_name().to_str().unwrap()));
             }
         }
     }
+    //println!("{:?}", profiles);
     if profiles.len() == 0 {
         drop(fs::create_dir(
             format!(
-                r"{}\profile_DEFAULT",
+                r"{}/profile_DEFAULT",
                 app_handle
                     .path_resolver()
                     .app_dir()
@@ -194,7 +198,7 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
 }
 fn config_folder_path(app_handle: &tauri::AppHandle, profile_id: &String) -> String {
     format!(
-        r"{}\profile_{}",
+        r"{}/profile_{}",
         app_handle
             .path_resolver()
             .app_dir()
@@ -205,7 +209,7 @@ fn config_folder_path(app_handle: &tauri::AppHandle, profile_id: &String) -> Str
 }
 fn config_file_path(app_handle: &tauri::AppHandle, profile_id: &String) -> String {
     format!(
-        r"{}\.botconfig_{}",
+        r"{}/.botconfig_{}",
         app_handle
             .path_resolver()
             .app_dir()
@@ -292,7 +296,7 @@ async fn create_window(profile_id: String, app_handle: tauri::AppHandle) {
         tauri::WindowUrl::External("https://universe.flyff.com/play".parse().unwrap()),
     )
     .data_directory(PathBuf::from(format!(
-        r"{}\profile_{}",
+        r"{}/profile_{}",
         app_handle
             .path_resolver()
             .app_dir()
@@ -329,7 +333,7 @@ fn should_disconnect(config: &BotConfig) -> bool {
 fn start_bot(profile_id: String, state: tauri::State<AppState>, app_handle: tauri::AppHandle) {
     let logger = state.logger.clone();
     let config_path = format!(
-        r"{}\.botconfig_{}",
+        r"{}/.botconfig_{}",
         app_handle
             .path_resolver()
             .app_dir()
@@ -410,7 +414,7 @@ fn start_bot(profile_id: String, state: tauri::State<AppState>, app_handle: taur
             if config.change_id() > last_config_change_id {
                 config.serialize(
                     format!(
-                        r"{}\.botconfig_{}",
+                        r"{}/.botconfig_{}",
                         app_handle
                             .path_resolver()
                             .app_dir()
@@ -549,6 +553,8 @@ fn start_bot(profile_id: String, state: tauri::State<AppState>, app_handle: taur
                 frontend_info = Arc::new(RwLock::new(frontend_info_mut));
                 // Send infos to frontend
                 send_info(&*frontend_info.read());
+            } else {
+                slog::warn!(logger, "No image captured");
             }
 
             // Update last mode
