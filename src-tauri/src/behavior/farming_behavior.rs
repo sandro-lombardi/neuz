@@ -288,6 +288,7 @@ impl<'a> FarmingBehavior<'_> {
             self.rotation_movement_tries = 0;
             return self.state;
         }
+
         // Transition to next state
         State::SearchingForEnemy
     }
@@ -400,6 +401,7 @@ impl<'a> FarmingBehavior<'_> {
 
         // Wait a few ms before transitioning state
         std::thread::sleep(Duration::from_millis(500));
+
         State::Attacking(mob)
     }
 
@@ -421,9 +423,12 @@ impl<'a> FarmingBehavior<'_> {
             self.obstacle_avoidance_count = 0;
             self.avoid_last_click();
         }
-        play!(self.movement => [
-            PressKey("Escape"),
-        ]);
+
+        if image.identify_target_marker(false).is_some() {
+            play!(self.movement => [
+                PressKey("Escape"),
+            ]);
+        }
         return State::SearchingForEnemy;
     }
 
@@ -512,6 +517,12 @@ impl<'a> FarmingBehavior<'_> {
                 self.last_initial_attack_time = Instant::now();
                 self.is_attacking = true;
                 self.already_attack_count = 0;
+
+                // Stop forward movement
+                use crate::movement::prelude::*;
+                play!(self.movement => [
+                    HoldKeyFor("S", dur::Fixed(50)),
+                ]);
             }
             // Use buffs only when target is found so we don't waste them
             self.check_buffs(config);
